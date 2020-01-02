@@ -1,5 +1,9 @@
-ISSoundAdditions
+ISSoundAdditions Swift edition
 ================
+
+//mabi99
+This is the original ISSoundAdditions just rewritten in Swift. No warranty for anything...
+//
 
 ISSoundAdditions is a NSSound category to read and modify system volume effortlessly.
 
