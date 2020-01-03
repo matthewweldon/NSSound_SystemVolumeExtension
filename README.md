@@ -1,10 +1,18 @@
 ISSoundAdditions Swift edition
 ================
+This is based on the original ISSoundAdditions adapted to Swift by mabi99 (Marco Binder, Heidelberg, Germany). First forked Jan 2020.
 
-//mabi99
-This is the original ISSoundAdditions just rewritten in Swift. No warranty for anything...
-//
+Major changes: original ISSOundAdditions methods were moved to the private interface of the NSSound extension. Public interface is now perfectly Swift 5 conforming, and everything is consitently prefixed with "systemSound...". System volume can muted state are now accessed as properties (gettable & settable); systemVolumeIncreaseBy() and systemVolumeDecreaseBy() were removed: simply use NSSound.systemVolume += 0.1 or the like!
 
+Minor change: the private function to set the system volume now has an optional parameter muteOff:Bool, which specifies if setting the volume automatically un-mutes the system. This CAN be desired, but it can also make sense not to. The public interface to systemVolume does not use this option currently (auto-unmutes as previously in ISSoundAdditions).
+
+One added convenience function is systemVolumeFadeToMute(seconds:Float, blocking:Bool), which does what its name implies: it fades out the volume softly during the specified time (default 3 seconds). This function is threaded if blocking was set to false (default: true). In this case, the fadeing out happens in the background while the function immediatelly returns; caveat: during the fadeing out, the user can manually change the volume or mute the system– the function will stubbornly continue what it's been doing. No big harm, but something to keep in mind. NOTE: the function resets the system volume to the volume before muting, so that the user can unmute the system (e.g. by the keyboard mute key) to return to the previous volume as expected from a muted system. (This is realized by the new "mutingOff" parameter of the private setSystemVolume() function.)
+
+Disclaimer: I have tested the code reasonably well, but I assume no liability for any harm or inconvenience it may cause- use at own risk! On the other hand, I claim no copy right, just go ahead and use it! Would just be nice to be acknowledged if you use it...
+
+
+ISSoundAdditions
+================
 ISSoundAdditions is a NSSound category to read and modify system volume effortlessly.
 
 It's entirely built using CoreAudio to get and set the volume of the system sound and some other utilities.
