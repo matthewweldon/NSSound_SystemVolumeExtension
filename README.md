@@ -1,4 +1,4 @@
-ISSoundAdditions Swift edition
+NSSound_SystemVolumeExtension
 ================
 This is based on the original ISSoundAdditions adapted to Swift by mabi99 (Marco Binder, Heidelberg, Germany). First forked Jan 2020.
 
