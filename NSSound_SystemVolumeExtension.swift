@@ -30,7 +30,7 @@ extension NSSound {
     //
     // PUBLIC INTERFACE
     // to be swifty, public interface is mostly gettable-settable properties,
-    // only few convenienc e functions
+    // only few convenience functions
     //
     
     
@@ -49,14 +49,14 @@ extension NSSound {
     
     // convenience function to fade system volume out to mute over (Float) seconds
     // NOTE: blocking specifies if function returns immediately or only after muting completed!
-    // If blocking = false the process becomes multi-threaded and any manual volume control
-    // while fading out will be overridden! Can be desired or not...
+    // If blocking = false the task will be scheduled in a global queue for asynchronous execution
+    // by GDC– any manual volume control while fading out will be overridden! Can be desired or not...
     public class func systemVolumeFadeToMute(seconds: Float = 3, blocking: Bool = true) {
         // return if already muted
         if systemVolumeIsMuted {return}
 
         if blocking {fadeSystemVolumeToMutePrivate(seconds: seconds)}
-        else {Thread.detachNewThread {self.fadeSystemVolumeToMutePrivate(seconds: seconds)} }
+        else {DispatchQueue.global().async {self.fadeSystemVolumeToMutePrivate(seconds: seconds)} }
     }
     
     
