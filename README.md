@@ -1,3 +1,8 @@
+Modified to include methods for inputdevices (microphones) in a similar style as the original author's swift methods
+
+
+#Below is the original Readme text
+===========
 NSSound_SystemVolumeExtension
 ================
 This is based on the original ISSoundAdditions adapted to Swift by mabi99 (Marco Binder, Heidelberg, Germany). First forked Jan 2020.

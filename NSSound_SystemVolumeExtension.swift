@@ -1,8 +1,9 @@
 //
 //  NSSound_SystemVolumeExtension.swift
-//
+//  Modified by Matt Weldon 2021.07.20 
 //  Created by Marco Binder on 02.01.20.
-//
+// 
+
 //  based on:
 //  ISSoundAdditions.m (ver 1.2 - 2012.10.27)
 //
@@ -20,7 +21,6 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-
 
 import CoreAudioKit
 
@@ -61,6 +61,10 @@ extension NSSound {
     
     
     
+    public static var systemInputVolume: Float {
+        get {return self.getDefaultInputDeviceVolume()}
+        set {self.setDefaultInputDeviceVolume(toVolume:newValue)}
+    }
     
     
     
@@ -343,6 +347,128 @@ extension NSSound {
             }
         }
         return false
+    }
+
+ 
+    private class func getDefaultInputDeviceVolume()-> Float32{
+        var address:AudioObjectPropertyAddress
+        var deviceID: AudioDeviceID = kAudioDeviceUnknown
+        var err: OSStatus
+        var size: UInt32 = 0
+        var channels:[UInt32] = [0,0]
+        var volume: Float32 = 0
+        address = AudioObjectPropertyAddress.init(mSelector: kAudioHardwarePropertyDefaultInputDevice,
+                                                  mScope: kAudioObjectPropertyScopeGlobal,
+                                                  mElement: kAudioObjectPropertyElementMaster)
+            
+        size = UInt32(MemoryLayout.size(ofValue: size)) // needs to be converted to UInt32?
+
+        err = AudioObjectGetPropertyData( AudioObjectID(kAudioObjectSystemObject), &address, 0, nil, &size, &deviceID );
+
+        if ( (err == 0) ) {
+                address.mSelector = kAudioDevicePropertyPreferredChannelsForStereo;
+                address.mScope = kAudioDevicePropertyScopeInput;
+                address.mElement = kAudioObjectPropertyElementWildcard;
+                size = UInt32((MemoryLayout.size(ofValue: channels[0]))) ;
+                err = AudioObjectGetPropertyData( deviceID, &address, 0, nil, &size, &channels );
+        }
+        
+        address.mSelector = kAudioDevicePropertyVolumeScalar;
+        address.mScope = kAudioDevicePropertyScopeInput;
+
+        size = UInt32(MemoryLayout.size(ofValue: volume)) // needs to be converted to UInt32?
+        address.mElement = kAudioObjectPropertyElementMaster;
+        // returns an error which we expect since it reported not having the property
+        err = AudioObjectGetPropertyData( deviceID, &address, 0, nil, &size, &volume );
+
+        size = UInt32(MemoryLayout.size(ofValue: volume)) // needs to be converted to UInt32?
+        address.mElement = channels[0];
+        // returns noErr, but says the volume is always zero (weird)
+        err = AudioObjectGetPropertyData( deviceID, &address, 0, nil, &size, &volume );
+
+        size = UInt32(MemoryLayout.size(ofValue: volume)) // needs to be converted to UInt32?
+        address.mElement = channels[ 1 ];
+        // returns noErr, but returns the correct volume!
+        err = AudioObjectGetPropertyData( deviceID, &address, 0, nil, &size, &volume );
+
+    
+        address.mSelector = kAudioDevicePropertyVolumeScalar;
+        address.mScope = kAudioDevicePropertyScopeInput;
+
+//            size = sizeof(volume);
+
+        return volume
+
+    }
+
+
+
+    //https://stackoverflow.com/questions/11041335/how-do-you-set-the-input-level-gain-on-the-built-in-input-osx-core-audio-au
+    private class func setDefaultInputDeviceVolume(toVolume:Float32)-> OSStatus{
+        var address:AudioObjectPropertyAddress
+        var deviceID: AudioDeviceID = kAudioDeviceUnknown
+        var err: OSStatus
+        var size: UInt32 = 0
+        var channels:[UInt32] = [0,0]
+        var volume: Float32 = 0
+        address = AudioObjectPropertyAddress.init(mSelector: kAudioHardwarePropertyDefaultInputDevice,
+                                                  mScope: kAudioObjectPropertyScopeGlobal,
+                                                  mElement: kAudioObjectPropertyElementMaster)
+            
+        size = UInt32(MemoryLayout.size(ofValue: size)) // needs to be converted to UInt32?
+
+        err = AudioObjectGetPropertyData( AudioObjectID(kAudioObjectSystemObject), &address, 0, nil, &size, &deviceID );
+
+        if ( (err == 0) ) {
+                address.mSelector = kAudioDevicePropertyPreferredChannelsForStereo;
+                address.mScope = kAudioDevicePropertyScopeInput;
+                address.mElement = kAudioObjectPropertyElementWildcard;
+                size = UInt32((MemoryLayout.size(ofValue: channels[0]))) ;
+                err = AudioObjectGetPropertyData( deviceID, &address, 0, nil, &size, &channels );
+        }
+        
+        address.mSelector = kAudioDevicePropertyVolumeScalar;
+        address.mScope = kAudioDevicePropertyScopeInput;
+
+        size = UInt32(MemoryLayout.size(ofValue: volume)) // needs to be converted to UInt32?
+        address.mElement = kAudioObjectPropertyElementMaster;
+        // returns an error which we expect since it reported not having the property
+        err = AudioObjectGetPropertyData( deviceID, &address, 0, nil, &size, &volume );
+
+        size = UInt32(MemoryLayout.size(ofValue: volume)) // needs to be converted to UInt32?
+        address.mElement = channels[0];
+        // returns noErr, but says the volume is always zero (weird)
+        err = AudioObjectGetPropertyData( deviceID, &address, 0, nil, &size, &volume );
+
+        size = UInt32(MemoryLayout.size(ofValue: volume)) // needs to be converted to UInt32?
+        address.mElement = channels[ 1 ];
+        // returns noErr, but returns the correct volume!
+        err = AudioObjectGetPropertyData( deviceID, &address, 0, nil, &size, &volume );
+
+    
+        address.mSelector = kAudioDevicePropertyVolumeScalar;
+        address.mScope = kAudioDevicePropertyScopeInput;
+
+//            size = sizeof(volume);
+
+        if ( toVolume < 0.0 ) { volume = 0.0}
+        else if ( toVolume > 1.0 ) {volume = 1.0}
+        else {volume = toVolume}
+
+        address.mElement = kAudioObjectPropertyElementMaster;
+        // returns an error which we expect since it reported not having the property
+        err = AudioObjectSetPropertyData( deviceID, &address, 0, nil, size, &volume );
+
+        address.mElement = channels[ 0 ];
+        // returns noErr, but doesn't affect my input gain
+        err = AudioObjectSetPropertyData( deviceID, &address, 0, nil, size, &volume );
+
+        address.mElement = channels[ 1 ];
+        // success! correctly sets the input device volume.
+        err = AudioObjectSetPropertyData( deviceID, &address, 0, nil, size, &volume );
+
+        return err
+
     }
 
 }
